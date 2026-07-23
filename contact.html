@@ -155,7 +155,7 @@
 <span class="material-symbols-outlined">mail</span>
 <h3 class="font-headline-md text-headline-md">Inquiries</h3>
 </div>
-<p class="text-on-surface-variant font-body-md">hello@grassrootsgrowth.com<br>(917) 699-6546</p>
+<p class="text-on-surface-variant font-body-md"><a class="hover:text-primary underline decoration-1 underline-offset-4 transition-colors" href="mailto:GGConsultingNY@outlook.com">GGConsultingNY@outlook.com</a><br><a class="hover:text-primary underline decoration-1 underline-offset-4 transition-colors" href="tel:9176996546">(917) 699-6546</a></p>
 </div>
 </div>
 </div>
@@ -175,7 +175,12 @@
 <div class="w-16 h-1 bg-secondary mx-auto"></div>
 </div>
 <div class="bg-surface border border-outline-variant p-8 md:p-12">
-<form action="#" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+<form action="/api/contact" method="post" id="inquiry-form" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
+<!-- Honeypot: hidden from people, tempting to bots -->
+<div class="hidden" aria-hidden="true">
+<label for="company_website">Company website</label>
+<input id="company_website" name="company_website" tabindex="-1" autocomplete="off" type="text">
+</div>
 <!-- Name -->
 <div class="input-group">
 <label class="block font-label-md text-label-md text-on-surface-variant mb-2 transition-colors" for="name">FULL NAME</label>
@@ -197,11 +202,12 @@
 <textarea class="w-full border border-outline-variant bg-transparent p-4 font-body-md focus:border-primary transition-all outline-none resize-none" id="message" name="message" placeholder="Tell us about your strategic goals or challenges..." required="" rows="4"></textarea>
 </div>
 <!-- Submit Button -->
-<div class="md:col-span-2 flex justify-center mt-6">
-<button class="group flex items-center gap-3 bg-primary text-on-primary px-12 py-4 font-label-md text-label-md transition-all hover:bg-secondary active:scale-95" type="submit">
+<div class="md:col-span-2 flex flex-col items-center gap-4 mt-6">
+<button class="group flex items-center gap-3 bg-primary text-on-primary px-12 py-4 font-label-md text-label-md transition-all hover:bg-secondary active:scale-95 disabled:opacity-60" type="submit">
                                 SEND MESSAGE
                                 <span class="material-symbols-outlined text-body-md group-hover:translate-x-1 transition-transform">arrow_forward</span>
 </button>
+<p class="font-body-md text-body-md text-center hidden" id="form-status" role="status" aria-live="polite"></p>
 </div>
 </form>
 </div>
@@ -264,7 +270,7 @@
 </div>
 <div class="flex flex-wrap gap-x-12 gap-y-6">
 <a class="font-body-md text-body-md text-on-tertiary-fixed-variant dark:text-on-tertiary-container opacity-80 hover:opacity-100 hover:text-secondary dark:hover:text-secondary-fixed-dim underline decoration-1 underline-offset-4 transition-opacity duration-300" href="#">7 Nimitz Place, Yonkers, NY</a>
-<a class="font-body-md text-body-md text-on-tertiary-fixed-variant dark:text-on-tertiary-container opacity-80 hover:opacity-100 hover:text-secondary dark:hover:text-secondary-fixed-dim underline decoration-1 underline-offset-4 transition-opacity duration-300" href="tel:9176996546">917-699-6546</a><a class="font-body-md text-body-md text-on-tertiary-fixed-variant dark:text-on-tertiary-container opacity-80 hover:opacity-100 hover:text-secondary dark:hover:text-secondary-fixed-dim underline decoration-1 underline-offset-4 transition-opacity duration-300" href="#">LinkedIn</a>
+<a class="font-body-md text-body-md text-on-tertiary-fixed-variant dark:text-on-tertiary-container opacity-80 hover:opacity-100 hover:text-secondary dark:hover:text-secondary-fixed-dim underline decoration-1 underline-offset-4 transition-opacity duration-300" href="tel:9176996546">917-699-6546</a><a class="font-body-md text-body-md text-on-tertiary-fixed-variant dark:text-on-tertiary-container opacity-80 hover:opacity-100 hover:text-secondary dark:hover:text-secondary-fixed-dim underline decoration-1 underline-offset-4 transition-opacity duration-300" href="mailto:GGConsultingNY@outlook.com">GGConsultingNY@outlook.com</a><a class="font-body-md text-body-md text-on-tertiary-fixed-variant dark:text-on-tertiary-container opacity-80 hover:opacity-100 hover:text-secondary dark:hover:text-secondary-fixed-dim underline decoration-1 underline-offset-4 transition-opacity duration-300" href="#">LinkedIn</a>
 <a class="font-body-md text-body-md text-on-tertiary-fixed-variant dark:text-on-tertiary-container opacity-80 hover:opacity-100 hover:text-secondary dark:hover:text-secondary-fixed-dim underline decoration-1 underline-offset-4 transition-opacity duration-300" href="#">Instagram</a>
 <a class="font-body-md text-body-md text-on-tertiary-fixed-variant dark:text-on-tertiary-container opacity-80 hover:opacity-100 hover:text-secondary dark:hover:text-secondary-fixed-dim underline decoration-1 underline-offset-4 transition-opacity duration-300" href="#">Privacy Policy</a>
 </div>
@@ -282,20 +288,58 @@
             });
         });
 
-        // Form submission micro-interaction
-        const contactForm = document.querySelector('form');
-        contactForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const btn = contactForm.querySelector('button');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'MESSAGE SENT';
-            btn.classList.replace('bg-primary', 'bg-green-800');
+        // Contact form submission
+        const contactForm = document.getElementById('inquiry-form');
+        const submitBtn = contactForm.querySelector('button[type="submit"]');
+        const status = document.getElementById('form-status');
+        const originalBtn = submitBtn.innerHTML;
 
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.classList.replace('bg-green-800', 'bg-primary');
-                contactForm.reset();
-            }, 3000);
+        const showStatus = (message, ok) => {
+            status.textContent = message;
+            status.classList.remove('hidden', 'text-primary', 'text-error');
+            status.classList.add(ok ? 'text-primary' : 'text-error');
+        };
+
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!contactForm.reportValidity()) return;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'SENDING…';
+            status.classList.add('hidden');
+
+            try {
+                const res = await fetch(contactForm.action, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify(
+                        Object.fromEntries(new FormData(contactForm))
+                    ),
+                });
+                const body = await res.json().catch(() => ({}));
+
+                if (res.ok) {
+                    contactForm.reset();
+                    submitBtn.innerHTML = 'MESSAGE SENT';
+                    showStatus("Thank you — we'll be in touch shortly.", true);
+                } else {
+                    submitBtn.innerHTML = originalBtn;
+                    showStatus(
+                        body.error ||
+                            'Something went wrong. Please email GGConsultingNY@outlook.com.',
+                        false
+                    );
+                }
+            } catch {
+                submitBtn.innerHTML = originalBtn;
+                showStatus(
+                    'Network error. Please email GGConsultingNY@outlook.com.',
+                    false
+                );
+            } finally {
+                submitBtn.disabled = false;
+                setTimeout(() => { submitBtn.innerHTML = originalBtn; }, 4000);
+            }
         });
     </script>
 

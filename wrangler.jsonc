@@ -6,8 +6,8 @@
   // secret, which `wrangler deploy` preserves. Plaintext dashboard variables
   // are not preserved, so keep them in this file instead.
   "vars": {
-    "CONTACT_TO": "GGConsultingNY@outlook.com"
-    // "CONTACT_FROM": "Website <hello@yourdomain.com>"  // add once a domain is verified
+    "CONTACT_TO": "GGConsultingNY@outlook.com",
+    "CONTACT_FROM": "Grassroots & Growth <noreply@grassrootsandgrowth.com>"
   },
   "assets": {
     // Only this directory is public. Source and config stay out of it.

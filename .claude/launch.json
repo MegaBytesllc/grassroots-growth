@@ -4,17 +4,7 @@
     {
       "name": "grgweb",
       "runtimeExecutable": "/opt/homebrew/bin/npx",
-      "runtimeArgs": [
-        "--yes",
-        "wrangler@4",
-        "pages",
-        "dev",
-        ".",
-        "--port",
-        "8788",
-        "--compatibility-date",
-        "2026-05-22"
-      ],
+      "runtimeArgs": ["--yes", "wrangler@4", "dev", "--port", "8788"],
       "port": 8788
     }
   ]

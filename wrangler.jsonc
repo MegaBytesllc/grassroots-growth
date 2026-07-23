@@ -1,0 +1,19 @@
+{
+  "name": "grassroots-growth",
+  "main": "src/index.js",
+  "compatibility_date": "2026-05-22",
+  // Non-secret config. RESEND_API_KEY is NOT here — it must stay an encrypted
+  // secret, which `wrangler deploy` preserves. Plaintext dashboard variables
+  // are not preserved, so keep them in this file instead.
+  "vars": {
+    "CONTACT_TO": "GGConsultingNY@outlook.com"
+    // "CONTACT_FROM": "Website <hello@yourdomain.com>"  // add once a domain is verified
+  },
+  "assets": {
+    // Only this directory is public. Source and config stay out of it.
+    "directory": "./public",
+    "binding": "ASSETS",
+    // Serves /about from about.html, keeping the clean URLs the nav links use.
+    "html_handling": "auto-trailing-slash"
+  }
+}

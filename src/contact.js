@@ -1,7 +1,6 @@
-// Cloudflare Pages Function: POST /api/contact
 // Relays contact-form submissions to the inquiries inbox via Resend.
 //
-// Required environment variable (set in the Pages dashboard, encrypted):
+// Required environment variable (set as an encrypted secret):
 //   RESEND_API_KEY   API key from resend.com
 // Optional:
 //   CONTACT_TO       destination inbox (defaults below)
@@ -28,7 +27,11 @@ const escapeHtml = (value) =>
       })[char],
   );
 
-export async function onRequestPost({ request, env }) {
+export async function handleContact(request, env) {
+  if (request.method !== "POST") {
+    return json(405, { error: "Method not allowed." });
+  }
+
   let submitted;
   try {
     const contentType = request.headers.get("content-type") || "";

@@ -12,21 +12,25 @@ Styling is Tailwind via CDN with a shared design-token config inlined in each pa
 
 ## Contact form
 
-`POST /api/contact` is handled by [`functions/api/contact.js`](functions/api/contact.js), a
-Cloudflare Pages Function that relays submissions to the inquiries inbox through
-[Resend](https://resend.com). The API key lives in an encrypted environment variable, so it
-is never exposed to the browser.
+`POST /api/contact` is handled by [`src/contact.js`](src/contact.js) and relays submissions
+to the inquiries inbox through [Resend](https://resend.com). The API key lives in an
+encrypted secret, so it is never exposed to the browser.
+
+The site deploys as a Cloudflare **Worker with static assets**, not a Pages project. Only
+`public/` is served publicly; `src/`, config, and this README are not reachable over HTTP.
 
 ### Required configuration
 
-In the Cloudflare Pages dashboard under **Settings → Environment variables**, add for
-**Production** (and Preview, if you want the form live there):
+`RESEND_API_KEY` must be an **encrypted secret** on the Worker — `wrangler deploy` preserves
+secrets but does not preserve plaintext dashboard variables. Set it once:
 
-| Variable | Value | Notes |
-| --- | --- | --- |
-| `RESEND_API_KEY` | your Resend key | **Encrypt this one.** |
-| `CONTACT_TO` | `GGConsultingNY@outlook.com` | Optional; this is the default. |
-| `CONTACT_FROM` | `Website <hello@yourdomain.com>` | Must be a Resend-verified domain. |
+```bash
+npx wrangler secret put RESEND_API_KEY
+```
+
+`CONTACT_TO` and `CONTACT_FROM` are not secrets and belong in the `vars` block of
+`wrangler.jsonc`, so they survive every deploy. `CONTACT_FROM` must use a Resend-verified
+domain.
 
 Until `RESEND_API_KEY` is set the endpoint returns 503 and the form tells visitors to email
 directly, so nothing is silently lost.
@@ -48,13 +52,13 @@ Needs Node 22+ (Wrangler's minimum).
 
 ```bash
 cp .dev.vars.example .dev.vars   # then paste your real Resend key
-npx wrangler@4 pages dev . --port 8788 --compatibility-date 2026-05-22
+npx wrangler@4 dev --port 8788
 ```
 
-Plain static servers will not work for the form or for clean URLs (`/about`, `/contact`) —
-both are Pages features that only `wrangler pages dev` reproduces locally.
+Plain static servers will not work: the form needs the Worker, and the clean URLs
+(`/about`, `/contact`) come from the assets binding's HTML handling.
 
 ## Deploying
 
-Pushing to `main` triggers a Cloudflare Pages build. Build command is empty and the output
-directory is the repository root.
+Pushing to `main` triggers a Cloudflare Workers build, which runs `wrangler deploy` and
+reads `wrangler.jsonc`.
